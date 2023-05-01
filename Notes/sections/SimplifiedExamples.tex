@@ -1,0 +1,73 @@
+\section{Simplified Examples}
+
+\subsection{Non-Homogeneous Term in Stability Analysis}
+
+The model we'll consider is:
+
+\[
+u_{t}=-A+u-\nabla u
+\]
+
+
+\subsubsection{Stable States}
+
+Setting $u_{t}=0$, and searching for a uniform state we get $u_{s}=A$.
+
+\subsubsection{Stability Analysis}
+
+We want to expand the right hand side of the model in $\delta u$
+($u=u_{s}+\delta u)$:
+
+\begin{align*}
+\partial_{t}\left(u_{s}+\delta u\right) & =-A+u_{s}+\delta u-\nabla\delta u\\
+\partial_{t}\delta u & =-A+A+\delta u-\nabla\delta u\\
+ & =\delta u-\nabla\delta u
+\end{align*}
+
+Assuming a perturbation of the form $\delta u=\alpha\left(t\right)e^{ikx}$
+and only one spatial dimension:
+
+\begin{align*}
+\alpha_{t} & =\alpha-\alpha ik=\left(1-ik\right)\alpha\\
+\sigma_{R} & =1>0
+\end{align*}
+
+which means that the uniform state is always non-stable.
+
+\subsection{Stability Analysis with Spatial Derivatives}
+
+The model we'll consider is:
+
+\[
+u_{t}=-A+u+\nabla\cdot\left(u\nabla u\right)
+\]
+
+
+\subsubsection{Stable States}
+
+Setting $u_{t}=0$, and searching for a uniform state we get $u_{s}=A$.
+
+\subsubsection{Stability Analysis}
+
+We want to expand the right hand side of the model in $\delta u$
+($u=u_{s}+\delta u)$:
+
+\begin{align*}
+\partial_{t}\left(u_{s}+\delta u\right) & =-A+u_{s}+\delta u+\nabla\cdot\left(\left(u_{s}+\delta u\right)\nabla\left(u_{s}+\delta u\right)\right)\\
+\partial_{t}\delta u & =-A+A+\delta u+\nabla\cdot\left(\left(A+\delta u\right)\nabla\left(A+\delta u\right)\right)\\
+ & =\delta u+\nabla\cdot\left(A\nabla\delta u+\delta u\nabla\delta u\right)\\
+ & =\delta u+A\nabla^{2}\delta u+\nabla\delta u\cdot\nabla\delta u+\delta u\nabla^{2}\delta u\\
+ & =\delta u+\nabla\delta u\cdot\nabla\delta u+\left(A+\delta u\right)\nabla^{2}\delta u
+\end{align*}
+
+Assuming a perturbation of the form $\delta u=\alpha\left(t\right)e^{ikx}$
+wher $\left|\alpha\right|\ll1$. and only one spatial dimension:
+
+\begin{align*}
+\alpha_{t}e^{ikx} & =\alpha e^{ikx}+\left(\frac{d}{dx}\alpha e^{ikx}\right)^{2}+\left(A+\alpha e^{ikx}\right)\frac{d^{2}}{dx^{2}}\left(\alpha e^{ikx}\right)\\
+\alpha_{t}e^{ikx} & =\alpha e^{ikx}+\left(ik\alpha e^{ikx}\right)^{2}+\left(A+\alpha e^{ikx}\right)\left(-k^{2}\alpha e^{ikx}\right)\\
+ & =\alpha e^{ikx}-k^{2}\alpha^{2}e^{i2kx}-\left(A+\alpha e^{ikx}\right)k^{2}\alpha e^{ikx}\\
+ & =\alpha e^{ikx}-k^{2}\alpha^{2}e^{i2kx}-Ak^{2}\alpha e^{ikx}-k^{2}\alpha^{2}e^{i2kx}\\
+ & =\alpha e^{ikx}-Ak^{2}\alpha e^{ikx}-2k^{2}\alpha^{2}e^{i2kx}\\
+\alpha_{t} & =\left(1-Ak^{2}\right)\alpha
+\end{align*}
