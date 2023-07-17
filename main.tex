@@ -36,6 +36,7 @@ In the study of dryland ecosystems, it was found that the basic block one needs 
 A commonly observed vegetation pattern on slopped terrains is banded vegetation consisting of alternating stripes of vegetation and bare soil, oriented perpendicular to the slope direction. In this configuration each stripe benefits not only from direct rainfall but also from the interception of runoff water generated in the bare-soil stripe uphill, where the infiltration rate of surface water into the soil is lower than the rate in the vegetation stripe \parencite{meron_vegetation_2019}. However, at sufficiently lower precipitation rates vegetation stripes break into arc-shaped vegetation spots and concomitantly bare-soil areas merge to form longer pathways for water flow downhill. These pathways, in turn, increase the seepage of water and nutrients from the slope to the riverbed and change the ratio of vegetation biomass between the two components. Longer pathways of water and nutrient flow are often described as increased connectivity \parencite{okin_connectivity_2015}
 
 \section{The Model}
+\subsection{Model's Equations}
 We will study the problem of biomass patterns in drainage basin using the model proposed by \cite{gilad_phys_2004}, and \cite{gilad_mathematical_2007}. We choose this model as, unlike simpler models, it makes a distinction between soil water and surface water. Therefore distinguishing the surface water from the rest of the system, enabling us to examine it and water flux which derives from it.
 
 The model can be written in a non-dimensional form as such:
@@ -46,9 +47,10 @@ The model can be written in a non-dimensional form as such:
 \end{align}
 where $b(x,y),w(x,y),h(x,y)$ are the non-dimensional functions from $\mathbb{R}^2$ to $\mathbb{R}$ describing the biomass, soil water, and surface water. $\vec{J}$ is the (non-dimensional) water flux and is given by:
 \begin{align}
+    \label{eq:flux_def}
     \vec{J} =  -2\delta_h h\nabla\left(h+\zeta(x,y)\right)
 \end{align}
-using $\zeta$ as the topography function of the slope. Assuming uniform slope $\zeta(x,y)=my$, the water flux can be written as:
+using $\zeta$ as the topography function of the slope. Assuming uniform slope $\zeta(x,y)=my\label{eq:terrain}$, the water flux can be written as:
 \begin{equation}
     \nabla \cdot \vec{J} = -\delta_h \nabla^2(h^2) - 2\delta_h m \partial_y h
 \end{equation}
@@ -76,6 +78,14 @@ Our model equations are then:
     \partial_t w & = I h - \nu(1-\rho b)w - \gamma bw(1+\eta b)^2 + \delta_w \nabla^2 w \\
     \partial_t h & = p - I h - \nabla \cdot \vec{J}
 \end{align}
+
+\subsection{Scales of the slope}
+From equation \ref{eq:flux_def}, assuming uniform slope as in equation \ref{eq:terrain}, we can write the time derivative of $h$ in the following manner:
+\begin{equation}
+    \partial_t h = \frac{1}{1 - 2\delta_h m h} \left(p - I h + 2\delta_h h\nabla h\right)
+\end{equation}
+From this, we can see that if $0 < 2\delta_h m h \ll 1$ then the system dynamics do not depend on the terrain's slope. This inequality will be taken into account when choosing the range of slope values to simulate over.
+
 \subsection{Uniform Bare Steady State Solution}
 To be able to verify that our simulation indeed represents the mathematical model correctly, we derive in this section the linear stability of the uniform bare steady state solution. This linear stability can then be checked in the simulation.
 \subsubsection{Solutions of the Model}
@@ -140,12 +150,16 @@ We note here that the slope, in the case of linear terrain, only appears in the 
 For the numerical simulations of the model, we used the python package \texttt{dedalus3} \parencite[]{dedalus2020}. The code used in this paper, and scripts to generate the data used, can be found at \cite{Ohad_Relation_Between_Biomass_2023}.
 
 \subsection{Boundary Conditions}
-We now move to discuss how to simulate the model. For simplicity we choose a square region of $N\times N$ points, relating to an area of  $L\times L$  we wish to simulate. For the $x$ coordinates, we have periodic boundary conditions. For the $y$ axis, we wish to not force the total flux coming out of the region. This leads as to consider Neumann boundary condition at the bottom edge for the flux. Using $h(x,y=0)=h$ we can write:
-\begin{align}
-    \frac{\partial J_y}{\partial y}(y=0)                                                                                 & = 0 \\
-    \left(\frac{\partial h}{\partial y}\right)^2 + h \frac{\partial^2 h}{\partial y^2} + m \frac{\partial h}{\partial y} & = 0
-\end{align}
-Using $H=\frac{\partial h}{\partial y}$ we can get a Neumann boundary condition for $h$.
+We now move to discuss how to simulate the model. For simplicity we choose a square region of $N\times N$ points, relating to an area of  $L\times L$  we wish to simulate. For the $x$ coordinates, we have periodic boundary conditions. For the $y$ axis, we wish to not force the total flux coming out of the region. This leads as to consider Neumann boundary condition at the bottom edge for the flux. Using $h(x,y=0)=h$ we can write $J_y=-2\delta_h h \frac{\partial}{\partial y}(h+\zeta)$ as the $y$ compononent of the flux. We can then write the boundary condition as:
+\begin{equation}
+    \frac{\partial J_y}{\partial y}(y=0) = 0
+\end{equation}
+or in terms of $h$:
+\begin{equation}
+    \left(\frac{\partial h}{\partial y}\right)^2 + h \frac{\partial^2 h}{\partial y^2} + m \frac{\partial h}{\partial y} = 0
+\end{equation}
+
+Using $H=\frac{\partial h}{\partial y}$ we can get a Neumann boundary condition for $h$, i.e., $\frac{\partial h}{\partial y}=A\in \mathbb{R}$.
 \begin{align}
     \left(H + m + h\frac{\partial}{\partial y}\right)H         & = 0             \\
     \Rightarrow \frac{1}{H(H+m)} \frac{\partial H}{\partial y} & = - \frac{1}{h}
@@ -158,9 +172,13 @@ We can isolate $H$
 \begin{equation}
     \frac{\partial h}{\partial y} (y=0) = H = m \frac{e^{-m \int_0^{L_y} \frac{dy}{h}}}{1 - e^{-m \int_0^{L_y} \frac{dy}{h}}}
 \end{equation}
-For other fields and edges in the $y$ coordinate, we chose a zero Neumann boundary condition - $\frac{\partial f}{\partial y}=0$. Note that this additional condition makes the flux at the top edge equals to $mh$. This means our top edge isn't the separation line between drainage basins.
+
+For other fields and edges in the $y$ coordinate, we chose a zero Neumann boundary condition - $\frac{\partial f}{\partial y}=0$.
+Note that this additional condition makes the flux at the top edge equals to $mh$. This means our top edge isn't the separation line between drainage basins.
+
 \subsection{Results}
-The values of the constants of the non-dimensional model were taken from \parencite[]{gilad_mathematical_2007}. The values used are shown in Table  \ref{table:constants_tables}.
+The values of the constants of the non-dimensional model were taken from \parencite[]{gilad_mathematical_2007}.
+The values used are shown in Table  \ref{table:constants_tables}.
 \begin{table}[!ht]
     \centering
     \begin{tabular}{||cc||}
@@ -181,11 +199,11 @@ The values of the constants of the non-dimensional model were taken from \parenc
         $\delta_h$ & $\frac{1}{300}$ \\
         \hline
     \end{tabular}
-    \caption{Simulation constants' values.}
+    \caption{Values of simulation's constants.}
     \label{table:constants_tables}
 \end{table}
 
-The simulation was started on the zero state stable state with perturbations of order of magnitude of $10^{-6}$ and left to run for 500-2000 years until a stable non-bare state emerged. Figure \ref{fig:critical_point} shows the average biomass of two starting points around $p_c$.
+First, we checked that the numerical simulation indeed reproduces the linear stability analysis. The simulation started from the homogeneous non-bare state, and was left to run for 500 years. The precipitation values where chosen to be around $p_c$ (the critical precipitation). Figure \ref{fig:critical_point} shows the results of the simulation. We see that for $p<p_c$ the system decays to the zero state, while for $p>p_c$ the system moves to a nonzero state. This is in agreement with the linear stability analysis. Below $p_c$ the perturbations decay, while above $p_c$ they grow.
 \begin{figure}[!ht]
     \centering
     \includegraphics[scale=0.5]{plots/critical point.png}
@@ -193,45 +211,77 @@ The simulation was started on the zero state stable state with perturbations of 
     \label{fig:critical_point}
 \end{figure}
 
-For simulations with $p>p_c$ We plotted the flux going out of the region, and plotting a few key moments of patterns formation.  Results are shown in figure \ref{fig:key_moments}.
+We now move to study the water flux in the system in the case of $p>p_c$. We started each simulation from the nonzero uniform state, where the precipitation was chosen to be lower than the stationary state precipitation.
+We let the simulation run for 500 years, and plotted the flux going out of the region.
+We simulated different slopes (figure \ref{fig:flux_out_slopes}) and different precipitation values (figure \ref{fig:flux_out_precipitation}).
 
 \begin{figure}[!ht]
     \centering
+    \caption{Flux out of the region for various values of $m$.}
+    \label{fig:flux_out_slopes}
+
     \begin{subfigure}[]{0.5\textwidth}
         \centering
-        \includegraphics[scale=0.5]{plots/p1_1_m1_0.png}
-        \label{fig:p1_1}
+        \includegraphics[scale=0.3]{plots/p1_1_m1_0.png}
         \phantomcaption
+        \label{fig:m1_0}
     \end{subfigure}
+
     \begin{subfigure}[]{0.5\textwidth}
         \centering
-        \includegraphics[scale=0.5]{plots/p1_25_m1_0.png}
+        \includegraphics[scale=0.5]{plots/p1_1_m50_0.png}
         \phantomcaption
+        \label{fig:m50_0}
     \end{subfigure}
+
     \begin{subfigure}[]{0.5\textwidth}
         \centering
-        \includegraphics[scale=0.5]{plots/p1_3_m1_0.png}
+        \includegraphics[scale=0.5]{plots/p1_1_m100_0.png}
         \phantomcaption
-        \label{subfig:p13}
+        \label{fig:m100_0}
     \end{subfigure}
-    \centering
-    \caption{Key moments in the evolution o f the system for various values of precipitation.}
-    \label{fig:key_moments}
 \end{figure}
-As the flux changes significantly less after the nonzero uniform state has been achieved. We also add figure \ref{fig:flux_dropoff} of the flux after 150 years.
+
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.5]{plots/flux_dropoff.png}
-    \caption{Flux after nonzero uniform state has been reached}
-    \label{fig:flux_dropoff}
+    \caption{Flux out of the region for various values of $p$.}
+    \label{fig:flux_out_precipitation}
+
+    \begin{subfigure}[]{0.5\textwidth}
+        \centering
+        \includegraphics[scale=0.5]{plots/p1_15_m1_0.png}
+        \label{fig:p1_15}
+        \phantomcaption
+    \end{subfigure}
+
+    \begin{subfigure}[]{0.5\textwidth}
+        \centering
+        \includegraphics[scale=0.5]{plots/p1_17_m1_0.png}
+        \label{fig:p1_17}
+        \phantomcaption
+    \end{subfigure}
+
+    \begin{subfigure}[]{0.5\textwidth}
+        \centering
+        \includegraphics[scale=0.5]{plots/p1_19_m1_0.png}
+        \label{fig:p1_19}
+        \phantomcaption
+    \end{subfigure}
+
 \end{figure}
+
 \section{Discussion}
 
-Figure \ref{fig:critical_point} Shows that $p_c$ is the critical precipitation in the numerical simulation. Furthermore, The first mode to grow in the simulations is the nonzero uniform state, which is related to the dispersion curve \ref{eq:sigma1}, where the first mode to grow is the uniform mode, $k=0$. Those phenomena where anticipated by the model, and assure us that our numerical simulation is correct.
+Figure \ref{fig:critical_point} Shows that $p_c$ is the critical precipitation in the numerical simulation.
+Furthermore, The first mode to grow in the simulations is the nonzero uniform state, which is related to the dispersion curve \ref{eq:sigma1}, where the first mode to grow is the uniform mode, $k=0$.
+Those phenomena where anticipated by the model, and assure us that our numerical simulation is correct.
 
-In figure \ref{fig:key_moments} we see that the system goes from the zero state to the nonzero uniform state. Then it continues to lose stability and moves to either stripe or hexagonal spots patterns. We see that the change in the system's pattern correlate to a change in the outward flux. This can be further seen in figure \ref{fig:flux_dropoff}. As the uniform system loses stability, the outward flux is increased, albeit only slightly compared to the zero state. In the case where the precipitation is high enough for the nonzero uniform state to be stable (figure \ref{subfig:p13}), such a drop in the outward water flux doesn't appear.
+In figure \ref{fig:flux_out_precipitation} we see the expected result, that as we increase the precipitation, the final pattern in the simulation is higher in the rainfall gradient. Furthermore, we can see the higher the precipitation, the lower the outward flux. This suggest that higher patterns in the rainfall gradient are more efficient in absorbing water.
+We explain the increased outward water flux to a higher degree of water connectivity in the hexagonal spots, and in a lesser extent stipes and holes. That is to say, water can move farther without being absorbed by the soil or vegetation.
 
-In the case of hexagonal spots, and in a lesser sense in  striped patterns, the water can move farther without being absorbed into the soil or into the biomass. This leads us to first hypothesise that the outward water flux should increase as the system transition from a uniform nonzero state into a patterned state. But we see that the change in the water flux is extremely small when the change from the zero to nonzero uniform states is taken as reference. We relate this to the known fact that ecological systems can rearrange themselves to counteract external modifications.
+Increasing the slope in the simulations (figure \ref{fig:flux_out_slopes}) yields different results than increasing the precipitation. We see that the higher the slope, the less stable the new outwardflux is, after the transition from the uniform nonzero state. While the overall dynamics of the system, uniform nonzero state to hexagonal pattern, remains the same. This suggest that the slope doesn't effect the system dynamics, but does effect the outward flux.
+
+In areas that goes through droughts or desertification, precipitation becomes lower. We see from our simulations that this can be a cause to the higher rate of floods occuring in such area. The lower precipitation causes the system to move to a lower pattern in the rainfall gradient, which in turn causes a higher connectivity in the surface water. This higher connectivity apears as increased floods.
 
 \section{Bibliography}
 \printbibliography
